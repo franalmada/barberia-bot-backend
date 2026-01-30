@@ -5,7 +5,10 @@ import requests
 # Configuración de la página
 st.set_page_config(page_title="Admin Barbería", layout="wide")
 
-API_URL = "http://127.0.0.1:8000"
+import os
+
+# Intenta leer la URL de las variables de entorno, si no existe usa localhost (para que sigas probando en tu PC)
+API_URL = os.getenv("API_URL", "http://127.0.0.1:8000")
 
 # --- GESTIÓN DE SESIÓN (LOGIN) ---
 # --- GESTIÓN DE SESIÓN (LOGIN) ---
