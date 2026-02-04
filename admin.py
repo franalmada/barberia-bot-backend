@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import requests
-
+import time
 # Configuración de la página
 st.set_page_config(page_title="Admin Barbería", layout="wide")
 
@@ -178,6 +178,63 @@ if opcion == "Dashboard":
             }
         )
         
+        # --- ZONA DE ACCIÓN (Confirmar/Cancelar) ---
+        st.divider()
+        st.subheader("⚡ Gestión Rápida")
+
+        # 1. Filtramos las FILAS completas de los pendientes (no solo IDs)
+        # Así tenemos acceso al nombre y la hora también
+        df_pendientes = df[df["Estado"] == "⏳ Pendiente"]
+        
+        if not df_pendientes.empty:
+            col_sel, col_btn_ok, col_btn_cancel = st.columns([2, 1, 1])
+            
+            with col_sel:
+                # FUNCIÓN PARA QUE SE VEA BONITO EN EL MENÚ
+                def formato_opcion(id_turno):
+                    # Buscamos la fila correspondiente a este ID
+                    fila = df_pendientes[df_pendientes["ID"] == id_turno].iloc[0]
+                    # Retornamos: "Juan Pérez - 14:00 hs"
+                    return f"{fila['Cliente']} - {fila['Fecha']}"
+
+                turno_id_to_edit = st.selectbox(
+                    "Seleccionar Turno a gestionar:", 
+                    options=df_pendientes["ID"].tolist(), # El valor real sigue siendo el ID (para la base de datos)
+                    format_func=formato_opcion            # Pero lo que se ve es el Texto Bonito
+                )
+
+            # Botón Confirmar
+            with col_btn_ok:
+                st.write("") 
+                st.write("") 
+                if st.button("✅ Confirmar", use_container_width=True):
+                    db_action = SessionLocal()
+                    turno_ok = db_action.query(Turno).filter(Turno.id == turno_id_to_edit).first()
+                    if turno_ok:
+                        turno_ok.estado = "confirmado"
+                        db_action.commit()
+                        st.success(f"¡Turno de {turno_ok.cliente.nombre} Confirmado!")
+                        time.sleep(1) # Damos un segundo para leer
+                        st.rerun()
+                    db_action.close()
+
+            # Botón Cancelar
+            with col_btn_cancel:
+                st.write("")
+                st.write("")
+                if st.button("❌ Cancelar", type="primary", use_container_width=True):
+                    db_action = SessionLocal()
+                    turno_cancel = db_action.query(Turno).filter(Turno.id == turno_id_to_edit).first()
+                    if turno_cancel:
+                        turno_cancel.estado = "cancelado"
+                        db_action.commit()
+                        st.warning(f"Turno cancelado.")
+                        time.sleep(1)
+                        st.rerun()
+                    db_action.close()
+        else:
+            st.info("👏 ¡Todo al día! No hay turnos pendientes.")
+
     else:
         st.info("😴 No hay turnos registrados.")
     
