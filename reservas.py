@@ -100,11 +100,17 @@ def main():
 
     # 2. PASO 2: SELECCIONAR BARBERO
     barberos = db.query(Staff).filter(Staff.activo == True).all()
+    
+    if not barberos:
+        st.error("⚠️ No hay profesionales disponibles en este momento. Por favor contacta al administrador.")
+        st.stop() # Detiene la ejecución aquí para no generar error
+        
     nombres_barberos = [b.nombre for b in barberos]
     barbero_elegido_nombre = st.selectbox("2. ¿Con quién?", nombres_barberos)
     
-    index_barbero = nombres_barberos.index(barbero_elegido_nombre)
-    barbero_obj = barberos[index_barbero]
+    # Buscamos el objeto completo basado en el nombre seleccionado
+    # (Ahora es seguro hacerlo porque validamos que la lista no está vacía)
+    barbero_obj = next((b for b in barberos if b.nombre == barbero_elegido_nombre), None)
 
     # 3. PASO 3: FECHA Y HORA
     col1, col2 = st.columns(2)
